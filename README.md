@@ -1,4 +1,15 @@
 # remo
+REMO/
+├── app/
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── public/
+│   └── ...
+├── package.json
+├── next.config.ts
+├── tsconfig.json
+└── README.md
 export default function Home() {
   return (
     <main>
