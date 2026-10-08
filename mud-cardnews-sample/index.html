@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MU:D ARCHIVE — Card News Sample</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#e9e7e1;--paper:#f4f2ec;--black:#171717;--gray:#77756f;--line:rgba(23,23,23,.15)}
+body{background:var(--bg);color:var(--black);font-family:Inter,"Noto Sans KR",sans-serif;min-height:100vh}
+.top{height:68px;padding:0 32px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.08em}
+.logo{font-weight:600}.logo span{color:var(--gray);font-weight:400}.counter{font-variant-numeric:tabular-nums}
+.main{min-height:calc(100vh - 124px);display:grid;grid-template-columns:300px 1fr}
+.sidebar{padding:45px 32px;border-right:1px solid var(--line)}
+.eyebrow{color:var(--gray);font-size:10px;letter-spacing:.15em;margin-bottom:20px}
+.sidebar h1{font-size:32px;line-height:1.05;font-weight:500;letter-spacing:-.05em}
+.description{margin-top:20px;color:var(--gray);font-size:13px;line-height:1.7;word-break:keep-all}
+.slide-list{margin-top:40px}
+.slide{width:100%;display:flex;justify-content:space-between;padding:12px 0;border:0;border-bottom:1px solid var(--line);background:none;color:var(--gray);cursor:pointer;font-size:11px}
+.slide:hover,.slide.active{color:var(--black)}.slide-number{font-variant-numeric:tabular-nums}
+.preview{display:flex;align-items:center;justify-content:center;padding:40px;background:radial-gradient(circle at center,rgba(255,255,255,.5),transparent 45%)}
+.card{width:min(55vh,540px);aspect-ratio:4/5;position:relative;overflow:hidden;background:var(--paper);box-shadow:0 30px 50px rgba(0,0,0,.17)}
+.card:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.08;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");mix-blend-mode:multiply}
+.card-inner{position:relative;z-index:2;width:100%;height:100%;padding:9%}.meta{font-size:8px;letter-spacing:.14em;color:var(--gray)}.small{color:var(--gray);font-size:9px;line-height:1.7}
+.cover{display:flex;flex-direction:column;justify-content:space-between}.cover-title{margin-top:auto;margin-bottom:10%;font-size:clamp(30px,5vw,52px);line-height:1.1;letter-spacing:-.06em;font-weight:500;white-space:pre-line}.cover-bottom{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.1em}
+.question{display:flex;align-items:center;justify-content:center;text-align:center}.question-text{font-size:clamp(25px,4vw,42px);line-height:1.35;letter-spacing:-.055em;font-weight:500;white-space:pre-line}.question .small{margin-top:28px}
+.statement{display:flex;flex-direction:column;justify-content:center}.statement-title{margin-top:30px;font-size:clamp(34px,5vw,58px);line-height:1.08;letter-spacing:-.065em;font-weight:500;white-space:pre-line}.statement .small{max-width:75%;margin-top:28px;white-space:pre-line}
+.trace{display:grid;grid-template-columns:1fr 1fr;gap:8%;align-items:end}.trace-image{aspect-ratio:1;background:radial-gradient(circle at 60% 35%,#f0eee8 0 12%,transparent 13%),radial-gradient(circle at 45% 55%,#77756f 0 15%,#aaa8a0 16% 28%,transparent 29%),linear-gradient(135deg,#d8d6cf,#85837d);filter:grayscale(1)}.trace-title{margin-top:15px;font-size:clamp(24px,4vw,42px);line-height:1.08;letter-spacing:-.06em;font-weight:500;white-space:pre-line}.trace .small{margin-top:22px;white-space:pre-line}
+.online{display:flex;flex-direction:column}.online-title{margin-top:20%;font-size:clamp(28px,5vw,48px);line-height:1.08;letter-spacing:-.06em;font-weight:500;white-space:pre-line}.archive-nav{margin-top:12%;display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}.archive-nav div{padding:15px 0;border-bottom:1px solid var(--line);font-size:9px;letter-spacing:.1em}.online-url{margin-top:auto;font-size:9px;letter-spacing:.12em}
+.archive{display:flex;flex-direction:column}.archive-title{margin-top:15px;font-size:25px;line-height:1.15;letter-spacing:-.05em;white-space:pre-line}.archive-grid{margin-top:8%;flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:6px}.tile{position:relative;overflow:hidden}.tile:nth-child(1){background:linear-gradient(135deg,#aaa79f,#e1dfd8)}.tile:nth-child(2){background:linear-gradient(45deg,#6e6c66,#c6c3bb)}.tile:nth-child(3){background:linear-gradient(135deg,#dedbd3,#9d9a93)}.tile:nth-child(4){background:linear-gradient(45deg,#94918a,#dedbd4)}.tile:before{content:"";position:absolute;width:48%;height:48%;left:26%;top:26%;border-radius:50%;border:1px solid rgba(20,20,20,.3)}.tile-label{position:absolute;left:12px;bottom:10px;font-size:7px;letter-spacing:.1em}
+.reflection{display:flex;flex-direction:column;justify-content:center}.reflection-title{font-size:clamp(30px,5vw,52px);line-height:1.1;letter-spacing:-.06em;font-weight:500;white-space:pre-line}.reflection .small{margin-top:30px;white-space:pre-line}
+.closing{display:flex;flex-direction:column;justify-content:center}.closing-title{font-size:clamp(30px,5vw,50px);line-height:1.1;letter-spacing:-.06em;font-weight:500;white-space:pre-line}.closing-line{width:45px;margin:32px 0;border-top:1px solid var(--black)}.cta{font-size:9px;letter-spacing:.13em}.closing-bottom{margin-top:auto;display:flex;justify-content:space-between;color:var(--gray);font-size:8px}
+.bottom{height:56px;padding:0 32px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.bottom button{border:none;background:transparent;cursor:pointer;font-size:10px;letter-spacing:.1em;color:var(--black)}.bottom button:disabled{opacity:.25;cursor:default}
+@media(max-width:800px){.main{display:block}.sidebar{display:none}.preview{min-height:calc(100vh - 124px);padding:25px}.card{width:min(88vw,540px)}.top,.bottom{padding:0 18px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="logo">MU:D ARCHIVE <span>/ CARDNEWS STUDIO</span></div><div class="counter"><span id="current">01</span> / 08</div></header>
+<main class="main">
+<aside class="sidebar">
+<div class="eyebrow">SAMPLE CAMPAIGN</div>
+<h1>Homepage<br>Opening</h1>
+<p class="description">MU:D ARCHIVE 홈페이지 오픈을 알리는 첫 번째 카드뉴스 샘플.</p>
+<div class="slide-list">
+<button class="slide active" data-slide="0"><span class="slide-number">01</span><span>HOOK</span></button>
+<button class="slide" data-slide="1"><span class="slide-number">02</span><span>QUESTION</span></button>
+<button class="slide" data-slide="2"><span class="slide-number">03</span><span>STATEMENT</span></button>
+<button class="slide" data-slide="3"><span class="slide-number">04</span><span>TRACE</span></button>
+<button class="slide" data-slide="4"><span class="slide-number">05</span><span>ONLINE</span></button>
+<button class="slide" data-slide="5"><span class="slide-number">06</span><span>ARCHIVE</span></button>
+<button class="slide" data-slide="6"><span class="slide-number">07</span><span>REFLECTION</span></button>
+<button class="slide" data-slide="7"><span class="slide-number">08</span><span>CTA</span></button>
+</div>
+<p class="description" style="margin-top:40px">← → 카드 이동<br>SPACE 다음 카드</p>
+</aside>
+<section class="preview"><div id="card" class="card"></div></section>
+</main>
+<footer class="bottom"><button id="prev">← PREV</button><button id="next">NEXT →</button></footer>
+<script>
+const slides=[
+{html:`<div class="card-inner cover"><div class="meta">ARCHIVE / 2026</div><div class="cover-title">우리는 매일
+수많은 감정을
+지나갑니다.</div><div class="cover-bottom"><span>MU:D ARCHIVE</span><span>01 / 08</span></div></div>`},
+{html:`<div class="card-inner question"><div><div class="question-text">기뻤던 순간은
+사진으로 남기고,
+
+그때의 감정은
+어디에 남을까요?</div><div class="small">사진과 기록 사이,<br>보이지 않는 감정에 대하여.</div></div></div>`},
+{html:`<div class="card-inner statement"><div class="meta">MU:D / ARCHIVE</div><div class="statement-title">그래서 우리는
+감정을 기록합니다.</div><div class="small">사람과 순간,
+그리고 그 안에 남은 감정을
+수집하고 기록하는 아카이브.</div></div>`},
+{html:`<div class="card-inner trace"><div class="trace-image"></div><div><div class="meta">TRACE / 04</div><div class="trace-title">감정은
+흔적을
+남깁니다.</div><div class="small">눈에 보이지 않아도
+우리의 하루와 선택,
+관계에 분명한 흔적을
+남깁니다.</div></div></div>`},
+{html:`<div class="card-inner online"><div class="meta">NOW ONLINE</div><div class="online-title">그리고 이제
+그 기록을
+한곳에서
+만나보세요.</div><div class="archive-nav"><div>ARCHIVE</div><div>STORY</div><div>OBJECT</div><div>PEOPLE</div></div><div class="online-url">MU:D ARCHIVE ONLINE</div></div>`},
+{html:`<div class="card-inner archive"><div class="meta">MU:D ARCHIVE</div><div class="archive-title">하나의 감정에서
+시작된 이야기</div><div class="archive-grid"><div class="tile"><span class="tile-label">PEOPLE</span></div><div class="tile"><span class="tile-label">OBJECT</span></div><div class="tile"><span class="tile-label">STORY</span></div><div class="tile"><span class="tile-label">ARCHIVE</span></div></div></div>`},
+{html:`<div class="card-inner reflection"><div class="meta">REFLECTION / 07</div><div class="reflection-title">오늘의 감정이
+언젠가 나를 설명하는
+기록이 될 수 있도록.</div><div class="small">We archive what remains.<br><br>MU:D ARCHIVE</div></div>`},
+{html:`<div class="card-inner closing"><div class="closing-title">당신에게도
+기록하고 싶은
+감정이 있나요?</div><div class="closing-line"></div><div class="cta">VISIT OUR ARCHIVE</div><div class="closing-bottom"><span>MU:D ARCHIVE / ONLINE</span><span>08</span></div></div>`}
+];
+let currentSlide=0;
+const card=document.getElementById("card");
+const currentNumber=document.getElementById("current");
+const prevButton=document.getElementById("prev");
+const nextButton=document.getElementById("next");
+const slideButtons=document.querySelectorAll(".slide");
+function renderSlide(){card.innerHTML=slides[currentSlide].html;currentNumber.textContent=String(currentSlide+1).padStart(2,"0");slideButtons.forEach((b,i)=>b.classList.toggle("active",i===currentSlide));prevButton.disabled=currentSlide===0;nextButton.disabled=currentSlide===slides.length-1}
+function nextSlide(){if(currentSlide<slides.length-1){currentSlide++;renderSlide()}}
+function previousSlide(){if(currentSlide>0){currentSlide--;renderSlide()}}
+nextButton.onclick=nextSlide;prevButton.onclick=previousSlide;
+slideButtons.forEach((b,i)=>b.onclick=()=>{currentSlide=i;renderSlide()});
+document.addEventListener("keydown",e=>{if(e.key==="ArrowRight")nextSlide();if(e.key==="ArrowLeft")previousSlide();if(e.code==="Space"){e.preventDefault();nextSlide()}});
+renderSlide();
+</script>
+</body>
+</html>
