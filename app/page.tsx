@@ -11,7 +11,7 @@ type Post = {
 
 const nav=['팀','프로젝트','학습','포트폴리오','아카이브','캘린더','커뮤니티','관리'];
 const projects=[
- {title:'MOODISM',tag:'브랜드',desc:'감정을 기록하고 표현하는 패션 프로젝트',img:'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80'},
+ {title:'MU:D ARCHIVE',tag:'브랜드',desc:'감정을 기록하고 표현하는 패션 프로젝트',img:'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80'},
  {title:'AI CONTENT',tag:'콘텐츠',desc:'AI를 활용한 콘텐츠 제작 실험',img:'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=900&q=80'},
  {title:'PROJECT 03',tag:'서비스',desc:'새로운 문제를 발견하고 검증하는 프로젝트',img:'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80'},
  {title:'PROJECT 04',tag:'비즈니스',desc:'시장과 고객을 통해 답을 찾아가는 프로젝트',img:'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80'}
@@ -70,7 +70,7 @@ export default function Home(){
 
   <section className="hero"><div className="heroImg"/><div className="heroShade"/><div className="heroContent"><p className="eyebrow">REMO TEAM · 2026</p><h1>Together,<br/>We Grow.</h1><p>우리는 함께 배우고, 만들고, 성장합니다.</p><button className="circleBtn">↗</button></div></section>
 
-  <section className="section" id="프로젝트"><div className="sectionHead"><div><span className="eyebrow">PROJECTS</span><h2>우리가 만들고 있는 것</h2></div><a href="#">전체 보기 ↗</a></div><div className="grid projects">{projects.map(p=><article className="card project" key={p.title}><img src={p.img}/><div className="cardBody"><div><span className="pill">{p.tag}</span><h3>{p.title}</h3><p>{p.desc}</p></div><span className="arrow">↗</span></div></article>)}</div></section>
+  <section className="section" id="프로젝트"><div className="sectionHead"><div><span className="eyebrow">PROJECTS</span><h2>우리가 만들고 있는 것</h2></div><a href="#">전체 보기 ↗</a></div><div className="grid projects">{projects.map(p=><a className="card project" key={p.title} href={p.title==='MU:D ARCHIVE'?'/mud-cardnews/':'#'}><img src={p.img}/><div className="cardBody"><div><span className="pill">{p.tag}</span><h3>{p.title}</h3><p>{p.desc}</p></div><span className="arrow">↗</span></div></a>)}</div></section>
 
   <section className="section split" id="팀"><div className="intro"><span className="eyebrow">ABOUT REMO</span><h2>혼자가 아닌,<br/>팀으로 성장합니다.</h2><p>각자의 관심과 역량을 연결하고, 실제 프로젝트를 통해 배우며, 시장의 평가 속에서 성장하는 팀입니다.</p><button className="darkBtn">팀 소개 보기 ↗</button></div><div className="teamVisual"><div className="teamPhoto"/><div className="stat"><strong>11</strong><span>TEAM MEMBERS</span></div><div className="stat"><strong>6</strong><span>PROJECTS</span></div></div></section>
 
