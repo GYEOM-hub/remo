@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { neon } from "@neondatabase/serverless";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const DEFAULT_DOC_ID = "1nqp2hhKXxBK39YGHghDJFcEKQ3tZnmVVSkMJDsp9Xjc";
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+
 function words(s: string) { return s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(w => w.length > 1); }
 function chunksOf(text: string) { const t = text.replace(/\r/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim(); const out: string[] = []; for (let i = 0; i < t.length; i += 760) { const c = t.slice(i, i + 900).trim(); if (c.length > 80) out.push(c); } return out; }
 function retrieve(question: string, chunks: string[]) {
@@ -17,27 +20,76 @@ function retrieve(question: string, chunks: string[]) {
   const bigramScore = [...qBigrams].reduce((n, b) => n + (cBigrams.has(b) ? 1 : 0), 0);
   return { text, score: wordScore * 3 + bigramScore };
  }).sort((a,b) => b.score-a.score);
- // Korean questions often use particles/endings that do not exactly match the document.
- // Use character-bigram similarity as a fallback instead of immediately returning no results.
  return ranked.filter(x => x.score > 0).slice(0,4);
 }
-async function readDoc(id: string) { const r = await fetch("https://docs.google.com/document/d/" + encodeURIComponent(id) + "/export?format=txt", { cache: "no-store", signal: AbortSignal.timeout(12000) }); if (!r.ok) throw new Error("참고 문서에 접근할 수 없습니다. Google Docs 공유 권한을 확인해주세요."); const t = await r.text(); if (!t || t.includes("<!DOCTYPE html") || t.includes("accounts.google.com")) throw new Error("참고 문서를 읽을 수 없습니다. 링크가 있는 사용자에게 보기 권한을 허용해주세요."); return t; }
+async function readDoc(id: string) {
+ const r = await fetch("https://docs.google.com/document/d/" + encodeURIComponent(id) + "/export?format=txt", { cache: "no-store", signal: AbortSignal.timeout(12000) });
+ if (!r.ok) throw new Error("참고 문서에 접근할 수 없습니다. Google Docs 공유 권한을 확인해주세요.");
+ const t = await r.text();
+ if (!t || t.includes("<!DOCTYPE html") || t.includes("accounts.google.com")) throw new Error("참고 문서를 읽을 수 없습니다. 링크가 있는 사용자에게 보기 권한을 허용해주세요.");
+ return t;
+}
+function databaseUrl() {
+ return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.NEON_DATABASE_URL;
+}
+async function saveExchange(conversationId: string, question: string, answer: string) {
+ const url = databaseUrl();
+ if (!url) { console.error("Support history not saved: database URL is missing."); return; }
+ try {
+  const sql = neon(url);
+  await sql`CREATE TABLE IF NOT EXISTS support_conversations (
+   id TEXT PRIMARY KEY,
+   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+  await sql`CREATE TABLE IF NOT EXISTS support_messages (
+   id BIGSERIAL PRIMARY KEY,
+   conversation_id TEXT NOT NULL REFERENCES support_conversations(id) ON DELETE CASCADE,
+   role TEXT NOT NULL CHECK (role IN ('user','assistant')),
+   content TEXT NOT NULL,
+   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+  await sql`CREATE INDEX IF NOT EXISTS support_messages_conversation_idx ON support_messages (conversation_id, created_at)`;
+  await sql`INSERT INTO support_conversations (id) VALUES (${conversationId}) ON CONFLICT (id) DO UPDATE SET updated_at = NOW()`;
+  await sql`INSERT INTO support_messages (conversation_id, role, content) VALUES (${conversationId}, 'user', ${question}), (${conversationId}, 'assistant', ${answer})`;
+ } catch (error) {
+  // Do not prevent customers from receiving an answer if history saving fails.
+  console.error("Support conversation save failed:", error instanceof Error ? error.message : String(error));
+ }
+}
 export async function POST(request: Request) {
  try {
-  const body = await request.json(); const question = typeof body.question === "string" ? body.question.trim() : "";
+  const body = await request.json();
+  const question = typeof body.question === "string" ? body.question.trim() : "";
+  const conversationId = typeof body.conversationId === "string" && /^[a-zA-Z0-9_-]{8,100}$/.test(body.conversationId) ? body.conversationId : crypto.randomUUID();
   if (!question) return NextResponse.json({ error: "질문을 입력해주세요." }, { status: 400 });
   if (question.length > 1000) return NextResponse.json({ error: "질문은 1,000자 이하로 입력해주세요." }, { status: 400 });
   const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!key) return NextResponse.json({ error: "Vercel에 GEMINI_API_KEY 환경변수를 설정해주세요." }, { status: 503 });
-  let doc = process.env.CUSTOMER_SUPPORT_KNOWLEDGE || ""; if (!doc) doc = await readDoc(process.env.CUSTOMER_SUPPORT_DOC_ID || DEFAULT_DOC_ID);
+  let doc = process.env.CUSTOMER_SUPPORT_KNOWLEDGE || "";
+  if (!doc) doc = await readDoc(process.env.CUSTOMER_SUPPORT_DOC_ID || DEFAULT_DOC_ID);
   const matches = retrieve(question, chunksOf(doc));
-  if (!matches.length) return NextResponse.json({ answer: "현재 참고 문서에서 질문과 관련된 내용을 찾지 못했어요. 정확한 안내를 위해 REMO 담당자에게 문의해주세요.", sources: [] });
+  if (!matches.length) {
+   const answer = "현재 참고 문서에서 질문과 관련된 내용을 찾지 못했어요. 정확한 안내를 위해 REMO 담당자에게 문의해주세요.";
+   await saveExchange(conversationId, question, answer);
+   return NextResponse.json({ answer, sources: [], conversationId });
+  }
   const context = matches.map((m,i) => "[참고 내용 " + (i+1) + "]\n" + m.text).join("\n\n");
   const prompt = "너는 REMO 웹사이트의 고객상담 담당자다. 아래 참고 내용만 근거로 한국어로 친절하고 명료하게 답한다. 문서에 없는 정책, 가격, 일정, 연락처를 추측하지 않는다. 근거가 부족하면 참고 문서에서 확인할 수 없어 담당자 확인이 필요하다고 말한다. 민감한 정보를 요청하지 않는다.\n\n[참고 문서 발췌]\n" + context + "\n\n[고객 질문]\n" + question;
-  const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(MODEL) + ":generateContent?key=" + encodeURIComponent(key), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ systemInstruction: { parts: [{ text: "Use only the retrieved document excerpts to answer customer questions." }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 700 } }), signal: AbortSignal.timeout(25000), cache: "no-store" });
-  const data = await r.json(); if (!r.ok) { console.error("Gemini API error", r.status, data?.error?.message); return NextResponse.json({ error: "AI 답변 생성에 실패했습니다. Gemini 모델명과 Vercel 환경변수를 확인해주세요." }, { status: 502 }); }
+  const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(MODEL) + ":generateContent?key=" + encodeURIComponent(key), {
+   method: "POST", headers: { "Content-Type": "application/json" },
+   body: JSON.stringify({ systemInstruction: { parts: [{ text: "Use only the retrieved document excerpts to answer customer questions." }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 700 } }),
+   signal: AbortSignal.timeout(25000), cache: "no-store"
+  });
+  const data = await r.json();
+  if (!r.ok) { console.error("Gemini API error", r.status, data?.error?.message); return NextResponse.json({ error: "AI 답변 생성에 실패했습니다. Gemini 모델명과 Vercel 환경변수를 확인해주세요." }, { status: 502 }); }
   const answer = data?.candidates?.[0]?.content?.parts?.map((p: {text?: string}) => p.text || "").join("").trim();
   if (!answer) return NextResponse.json({ error: "AI가 답변을 생성하지 못했어요. 다시 시도해주세요." }, { status: 502 });
-  return NextResponse.json({ answer, sources: ["REMO 참고 문서"] });
- } catch (e) { const message = e instanceof Error ? e.message : ""; console.error("Customer support error", message); return NextResponse.json({ error: message.includes("문서") || message.includes("권한") ? message : "상담 처리 중 오류가 발생했어요. 잠시 후 다시 시도해주세요." }, { status: 500 }); }
+  await saveExchange(conversationId, question, answer);
+  return NextResponse.json({ answer, sources: ["REMO 참고 문서"], conversationId });
+ } catch (e) {
+  const message = e instanceof Error ? e.message : "";
+  console.error("Customer support error", message);
+  return NextResponse.json({ error: message.includes("문서") || message.includes("권한") ? message : "상담 처리 중 오류가 발생했어요. 잠시 후 다시 시도해주세요." }, { status: 500 });
+ }
 }
