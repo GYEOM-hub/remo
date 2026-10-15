@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const DEFAULT_DOC_ID = "1cx6NVPrkK_etUo7cfBvAzr7f-nX-m9yPolExK0kfpIo";
+const DEFAULT_DOC_ID = "1nqp2hhKXxBK39YGHghDJFcEKQ3tZnmVVSkMJDsp9Xjc";
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 function words(s: string) { return s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(w => w.length > 1); }
 function chunksOf(text: string) { const t = text.replace(/\r/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim(); const out: string[] = []; for (let i = 0; i < t.length; i += 760) { const c = t.slice(i, i + 900).trim(); if (c.length > 80) out.push(c); } return out; }
