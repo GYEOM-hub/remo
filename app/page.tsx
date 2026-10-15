@@ -9,7 +9,7 @@ type Post = {
  created_at: string;
 };
 
-const nav=['팀','프로젝트','학습','포트폴리오','아카이브','캘린더','커뮤니티','관리'];
+const nav=['팀','프로젝트','학습','포트폴리오','아카이브','캘린더','커뮤니티','고객상담','관리'];
 const projects=[
  {title:'MU:D ARCHIVE',tag:'브랜드',desc:'감정을 기록하고 표현하는 패션 프로젝트',img:'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80'},
  {title:'AI CONTENT',tag:'콘텐츠',desc:'AI를 활용한 콘텐츠 제작 실험',img:'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=900&q=80'},
@@ -65,8 +65,8 @@ export default function Home(){
 
  const formatDate=(value:string)=>new Intl.DateTimeFormat('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value)).replaceAll(' ','');
  return <main>
-  <header className="header"><a className="brand" href="#"><img src="/remo-logo.png" alt="REMO"/></a><nav>{nav.map(x=><a key={x} href={'#'+x}>{x}</a>)}</nav><div className="actions"><button className="icon">⌕</button><button className="login">로그인</button><button className="hamb" onClick={()=>setMenu(!menu)}>☰</button></div></header>
-  {menu && <div className="mobileNav">{nav.map(x=><a key={x} href={'#'+x} onClick={()=>setMenu(false)}>{x}</a>)}<a>회원가입</a></div>}
+  <header className="header"><a className="brand" href="#"><img src="/remo-logo.png" alt="REMO"/></a><nav>{nav.map(x=><a key={x} href={x==='고객상담'?'/customer-support':'#'+x}>{x}</a>)}</nav><div className="actions"><button className="icon">⌕</button><button className="login">로그인</button><button className="hamb" onClick={()=>setMenu(!menu)}>☰</button></div></header>
+  {menu && <div className="mobileNav">{nav.map(x=><a key={x} href={x==='고객상담'?'/customer-support':'#'+x} onClick={()=>setMenu(false)}>{x}</a>)}<a>회원가입</a></div>}
 
   <section className="hero"><div className="heroImg"/><div className="heroShade"/><div className="heroContent"><p className="eyebrow">REMO TEAM · 2026</p><h1>Together,<br/>We Grow.</h1><p>우리는 함께 배우고, 만들고, 성장합니다.</p><button className="circleBtn">↗</button></div></section>
 
