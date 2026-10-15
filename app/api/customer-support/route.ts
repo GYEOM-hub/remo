@@ -5,7 +5,22 @@ const DEFAULT_DOC_ID = "1nqp2hhKXxBK39YGHghDJFcEKQ3tZnmVVSkMJDsp9Xjc";
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 function words(s: string) { return s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(w => w.length > 1); }
 function chunksOf(text: string) { const t = text.replace(/\r/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim(); const out: string[] = []; for (let i = 0; i < t.length; i += 760) { const c = t.slice(i, i + 900).trim(); if (c.length > 80) out.push(c); } return out; }
-function retrieve(question: string, chunks: string[]) { const q = new Set(words(question)); return chunks.map(text => ({ text, score: [...q].reduce((n, w) => n + (words(text).includes(w) ? (w.length > 3 ? 2 : 1) : 0), 0) })).filter(x => x.score > 0).sort((a,b) => b.score-a.score).slice(0,4); }
+function retrieve(question: string, chunks: string[]) {
+ const qWords = new Set(words(question));
+ const normalize = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+ const bigrams = (s: string) => { const t = normalize(s); const out = new Set<string>(); for (let i = 0; i < t.length - 1; i++) out.add(t.slice(i, i + 2)); return out; };
+ const qBigrams = bigrams(question);
+ const ranked = chunks.map(text => {
+  const cWords = new Set(words(text));
+  const wordScore = [...qWords].reduce((n, w) => n + (cWords.has(w) ? (w.length > 3 ? 3 : 1) : 0), 0);
+  const cBigrams = bigrams(text);
+  const bigramScore = [...qBigrams].reduce((n, b) => n + (cBigrams.has(b) ? 1 : 0), 0);
+  return { text, score: wordScore * 3 + bigramScore };
+ }).sort((a,b) => b.score-a.score);
+ // Korean questions often use particles/endings that do not exactly match the document.
+ // Use character-bigram similarity as a fallback instead of immediately returning no results.
+ return ranked.filter(x => x.score > 0).slice(0,4);
+}
 async function readDoc(id: string) { const r = await fetch("https://docs.google.com/document/d/" + encodeURIComponent(id) + "/export?format=txt", { cache: "no-store", signal: AbortSignal.timeout(12000) }); if (!r.ok) throw new Error("참고 문서에 접근할 수 없습니다. Google Docs 공유 권한을 확인해주세요."); const t = await r.text(); if (!t || t.includes("<!DOCTYPE html") || t.includes("accounts.google.com")) throw new Error("참고 문서를 읽을 수 없습니다. 링크가 있는 사용자에게 보기 권한을 허용해주세요."); return t; }
 export async function POST(request: Request) {
  try {
